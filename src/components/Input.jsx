@@ -1,25 +1,17 @@
-import { useState } from "react";
-
-function Input({ karant, onValueChange }) {
-	const [value, setValue] = useState("");
-
-	const handleInputChange = (e) => {
-		const newValue = e.target.value;
-		setValue(newValue);
-		onValueChange(karant, newValue); // Pass the karat and value back to the parent
-	};
-
+export default function Input({ karat, onValueChange }) {
 	return (
-		<div>
-			<label className="text-xl">عيار {karant}</label>
+		<div className="flex flex-col gap-2 w-full">
+			<label className="text-xl">عيار {karat}</label>
 			<input
 				type="number"
-				className="p-2 rounded-md border"
-				value={value}
-				onChange={handleInputChange}
+				step="0.01"
+				min="0"
+				placeholder="0"
+				className="p-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
+				defaultValue={0}
+				onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+				onChange={(e) => onValueChange(parseFloat(e.target.value) || 0)}
 			/>
 		</div>
 	);
 }
-
-export default Input;

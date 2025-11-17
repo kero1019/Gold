@@ -1,65 +1,144 @@
 import Input from "./components/Input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
-  const [inputValue, setInputValue] = useState("");
-  const [taxs, setTaxs] = useState(0);
-  const [data, setData] = useState({ K24: 0, K21: 0, K18: 0, K14: 0 });
+  const [GoldPrice, setGoldPrice] = useState(0);
+  const [Taxes, setTaxes] = useState(0);
+  const [totalGrams, setTotalGrams] = useState(0);
 
-  // Convert inputValue to a number or default to 0
-  const inputNumber = parseFloat(inputValue) || 0;
+  const [LoPriceInput, setLoPriceInput] = useState(0);
+  const [LoPriceResult, setLoPriceResult] = useState(0);
 
-  // Calculate myGrams dynamically
-  const myGrams =
-    ((data.K24 * 24) / 21 +
-      data.K21 +
-      (data.K18 * 18) / 21 +
-      (data.K14 * 14) / 21) *
-    inputNumber;
+  const [inputValues, setInputValues] = useState({
+    K24: 0,
+    K21: 0,
+    K18: 0,
+    K14: 0,
+  });
 
-  // Calculate value of tax-adjusted grams
-  const valueOfTaxs = myGrams * (100 - taxs) / 100;
+  // حساب مجموع الجرامات (دهب صافي)
+  useEffect(() => {
+    const total =
+      inputValues.K21 +
+      inputValues.K24 * (24 / 21) +
+      inputValues.K18 * (18 / 21) +
+      inputValues.K14 * (14 / 21);
+    setTotalGrams(total);
+  }, [inputValues]);
 
-  const handleValueChange = (karant, value) => {
-    setData((prevData) => ({
-      ...prevData,
-      [`K${karant}`]: parseFloat(value) || 0, // Update the specific karat value
-    }));
-  };
+  // قيمة الذهب الصافي
+  const pureGoldPrice = totalGrams * GoldPrice;
+
+  // قيمة الخصم
+  const taxes = pureGoldPrice * (Taxes / 100);
+
+  // السعر بعد الخصم
+  const priceAfterDiscount = pureGoldPrice - taxes;
+
+  // تحديث LoPriceResult عندما يتغير LoPriceInput
+  useEffect(() => {
+    if (totalGrams > 0) {
+      const percentage = ((LoPriceInput / totalGrams - GoldPrice) / GoldPrice) * 100;
+      setLoPriceResult(percentage);
+    } else {
+      setLoPriceResult(0);
+    }
+  }, [LoPriceInput, GoldPrice, totalGrams]);
 
   return (
-    <div className="part-1 bg-background h-screen flex flex-col items-center justify-center gap-5">
-      <h1 className="text-3xl font-bold">سعر عيار 21 </h1>
-      <input
-        type="text"
-        maxLength={4}
-        className="p-5 rounded-2xl text-2xl"
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-      />
-      <h1 className="text-3xl font-bold">نسبة الخصم %</h1>
-      <input
-        type="text"
-        maxLength={2} // Allow up to 2 digits for tax percentage
-        className="p-5 rounded-2xl text-2xl"
-        value={taxs}
-        onChange={(e) => setTaxs(parseFloat(e.target.value) || 0)} // Update taxs state
-      />
-      <div className="bg-emerald-300 p-5 flex flex-col gap-5">
-        <Input karant={24} onValueChange={handleValueChange} />
-        <Input karant={21} onValueChange={handleValueChange} />
-        <Input karant={18} onValueChange={handleValueChange} />
-        <Input karant={14} onValueChange={handleValueChange} />
+    <div className="min-h-screen p-5 bg-background flex flex-col items-center gap-8">
+      <h1 className="text-3xl font-bold text-center">سعر عيار 21</h1>
+
+      {/* سعر الذهب */}
+      <div className="w-full max-w-md flex flex-col gap-3">
+        <label className="text-xl font-semibold">سعر الذهب</label>
+        <input
+          type="number"
+          step="0.01"
+          className="p-2 rounded-2xl text-2xl border focus:outline-none focus:ring-2 focus:ring-green-500"
+          value={GoldPrice}
+          onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+          onChange={(e) => setGoldPrice(parseFloat(e.target.value) || 0)}
+        />
       </div>
-      <button className="bg-green text-2xl font-bold rounded-lg p-5">دهب صافي</button>
-      <div className="result-box flex text-2xl gap-5 items-center">
-        <p>{inputNumber.toFixed(2)}</p>
-        <p className="font-bold">EG</p>
+
+      {/* نسبة الخصم */}
+      <div className="w-full max-w-md flex flex-col gap-3">
+        <label className="text-xl font-semibold">نسبة الخصم %</label>
+        <input
+          type="number"
+          step="0.01"
+          className="p-2 rounded-2xl text-2xl border focus:outline-none focus:ring-2 focus:ring-green-500"
+          value={Taxes}
+          onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+          onChange={(e) => setTaxes(parseFloat(e.target.value) || 0)}
+        />
       </div>
-      <button className="bg-green text-2xl font-bold rounded-lg p-5">السعر بعد الخصم</button>
-      <div className="result-box flex text-2xl gap-5 items-center">
-        <p>{valueOfTaxs.toFixed(2)}</p>
-        <p className="font-bold">EG</p>
+
+      {/* مدخلات العيارات */}
+      <div className="bg-emerald-300 rounded-lg p-5 flex flex-col gap-5 w-full max-w-lg">
+        {["24", "21", "18", "14"].map((karat) => (
+          <Input
+            key={karat}
+            karat={karat}
+            onValueChange={(value) =>
+              setInputValues((prev) => ({
+                ...prev,
+                ["K" + karat]: value,
+              }))
+            }
+          />
+        ))}
+      </div>
+
+      {/* السعر بعد الخصم و المخصوم */}
+      <div className="flex flex-col md:flex-row gap-5 w-full justify-center max-w-3xl">
+        <div className="flex-1 flex flex-col items-center gap-3">
+          <button className="bg-green text-2xl font-bold rounded-lg p-4 w-full md:w-auto">
+            السعر بعد الخصم
+          </button>
+          <div className="result-box flex text-2xl gap-3 items-center">
+            <p className="text-3xl font-bold">{priceAfterDiscount.toFixed(2)}</p>
+            <p className="font-semibold">EG</p>
+          </div>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center gap-3">
+          <button className="bg-green text-2xl font-bold rounded-lg p-4 w-full md:w-auto">
+            المخصوم
+          </button>
+          <div className="result-box flex text-2xl gap-3 items-center">
+            <p className="text-3xl font-bold">{taxes.toFixed(2)}</p>
+            <p className="font-semibold">EG</p>
+          </div>
+        </div>
+      </div>
+
+      {/* لو السعر + النسبة هتبقي */}
+      <div className="flex flex-col md:flex-row gap-5 w-full max-w-3xl mt-5">
+        <div className="flex-1 flex flex-col items-center gap-3">
+          <button className="bg-green text-2xl font-bold rounded-lg p-4 w-full md:w-auto">
+            لو السعر
+          </button>
+          <input
+            type="number"
+            step="0.01"
+            className="p-2 rounded-2xl text-2xl border focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
+            value={LoPriceInput}
+            onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+            onChange={(e) => setLoPriceInput(parseFloat(e.target.value) || 0)}
+          />
+        </div>
+
+        <div className="flex-1 flex flex-col items-center gap-3">
+          <button className="bg-green text-2xl font-bold rounded-lg p-4 w-full md:w-auto">
+            النسبة هتبقي
+          </button>
+          <div className="result-box flex text-2xl gap-3 items-center">
+            <p className="text-3xl font-bold">{LoPriceResult.toFixed(2)}</p>
+            <p className="font-semibold">%</p>
+          </div>
+        </div>
       </div>
     </div>
   );
