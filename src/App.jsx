@@ -1,5 +1,5 @@
-import Input from "./components/Input";
 import { useState, useEffect } from "react";
+import Input from "./components/Input";
 
 function App() {
   const [GoldPrice, setGoldPrice] = useState(0);
@@ -45,6 +45,12 @@ function App() {
     }
   }, [LoPriceInput, GoldPrice, totalGrams]);
 
+  // دالة مشتركة لمسح الحقل عند التركيز
+  const handleFocus = (setter) => (e) => {
+    e.target.value = ""; 
+    setter(0); 
+  };
+
   return (
     <div className="min-h-screen p-5 bg-background flex flex-col items-center gap-8">
       <h1 className="text-3xl font-bold text-center">سعر عيار 21</h1>
@@ -57,7 +63,7 @@ function App() {
           step="0.01"
           className="p-2 rounded-2xl text-2xl border focus:outline-none focus:ring-2 focus:ring-green-500"
           value={GoldPrice}
-          onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+          onFocus={handleFocus(setGoldPrice)}
           onChange={(e) => setGoldPrice(parseFloat(e.target.value) || 0)}
         />
       </div>
@@ -70,7 +76,7 @@ function App() {
           step="0.01"
           className="p-2 rounded-2xl text-2xl border focus:outline-none focus:ring-2 focus:ring-green-500"
           value={Taxes}
-          onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+          onFocus={handleFocus(setTaxes)}
           onChange={(e) => setTaxes(parseFloat(e.target.value) || 0)}
         />
       </div>
@@ -81,6 +87,8 @@ function App() {
           <Input
             key={karat}
             karat={karat}
+            value={inputValues["K" + karat]}
+            onFocus={() => setInputValues((prev) => ({ ...prev, ["K" + karat]: 0 }))}
             onValueChange={(value) =>
               setInputValues((prev) => ({
                 ...prev,
@@ -125,7 +133,7 @@ function App() {
             step="0.01"
             className="p-2 rounded-2xl text-2xl border focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
             value={LoPriceInput}
-            onFocus={(e) => e.target.value === "0" && (e.target.value = "")}
+            onFocus={handleFocus(setLoPriceInput)}
             onChange={(e) => setLoPriceInput(parseFloat(e.target.value) || 0)}
           />
         </div>
@@ -135,7 +143,7 @@ function App() {
             النسبة هتبقي
           </button>
           <div className="result-box flex text-2xl gap-3 items-center">
-            <p className="text-3xl font-bold">{LoPriceResult.toFixed(2)}</p>
+            <p className="text-3xl font-bold">{LoPriceResult.toFixed(2) * -1 }</p>
             <p className="font-semibold">%</p>
           </div>
         </div>
